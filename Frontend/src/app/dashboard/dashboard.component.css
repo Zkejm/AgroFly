@@ -9,7 +9,7 @@ main.dashboard {
 
 /* Sidebar Styles */
 .sidebar {
-  width: 12%;
+  width: 1%;
   min-width: 200px;
   background: linear-gradient(180deg, #0e3528 0%, #13412f 100%);
   color: #f4f6f8;
@@ -48,6 +48,7 @@ main.dashboard {
   font-weight: 500;
   opacity: 0.8;
   display: inline-flex;
+  font-size: 20px;
   align-items: center;
   gap: 12px;
   transition: background 0.2s, opacity 0.2s;
