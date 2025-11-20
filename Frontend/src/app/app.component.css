@@ -9,15 +9,11 @@ body{
   font-family: 'Inter', sans-serif;
   color: #22313f;
   background: #f4f6f8;
+  min-height: 100vh;
 }
 
 *, *::before, *::after {
   box-sizing: border-box;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
 }
 
 main.dashboard {

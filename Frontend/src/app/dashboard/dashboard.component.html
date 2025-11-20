@@ -1,0 +1,237 @@
+<main class="dashboard">
+  <aside class="sidebar">
+    <div class="sidebar__logo">
+      <span class="sidebar__logo-icon">AF</span>
+    </div>
+    <nav class="sidebar__nav">
+      <a class="sidebar__link sidebar__link--active" href="#">Domov</a>
+      <a class="sidebar__link" href="#">Kalendár</a>
+      <a class="sidebar__link" href="#">Odporúčania</a>
+      <a class="sidebar__link" href="#">Nástroje</a>
+    </nav>
+    <div class="sidebar__footer">
+      <button class="sidebar__settings" type="button">Nastavenia</button>
+    </div>
+  </aside>
+
+  <section class="workspace">
+    <header class="header">
+      <div class="header__left">
+        <div class="header__greeting card">
+          <h1 class="greeting-title">Hi, Andrea</h1>
+          <div class="greeting-row">
+            <p class="greeting-subtitle">Pekný deň, Andrea! Ste pripravená na novú analýzu?</p>
+            <div class="header__logo">
+              <div class="agrofly-logo">
+                <svg width="70" height="70" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <clipPath id="circleClip">
+                      <circle cx="50" cy="50" r="48"/>
+                    </clipPath>
+                  </defs>
+                  <circle cx="50" cy="50" r="48" fill="none" stroke="#e1e5ec" stroke-width="1"/>
+                  <rect x="2" y="2" width="96" height="48" fill="#BFDBFE" clip-path="url(#circleClip)"/>
+                  <rect x="2" y="50" width="96" height="48" fill="#BBF7D0" clip-path="url(#circleClip)"/>
+                  <g clip-path="url(#circleClip)">
+                    <path d="M35 45L50 30L65 45L50 50L35 45Z" fill="#374151"/>
+                    <path d="M35 55L50 70L65 55L50 50L35 55Z" fill="#374151"/>
+                    <circle cx="50" cy="50" r="8" fill="#374151"/>
+                  </g>
+                </svg>
+              </div>
+              <span class="agrofly-text">AGROFLY</span>
+            </div>
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn action-btn--primary">Nahraj snímky</button>
+          <button class="action-btn">Analyzuj dnes</button>
+          <button class="action-btn">Naposledy analyzované</button>
+          <button class="action-btn">Porovnaj 2 analýzy</button>
+        </div>
+      </div>
+
+      <div class="header__account">
+        <div class="account-info card">
+          <div class="account-header">
+            <h3>My Account</h3>
+            <div class="account-logout-wrapper">
+              <span class="logout-dot"></span>
+              <a href="#" class="account-logout">Log out</a>
+            </div>
+          </div>
+          <div class="account-profile">
+            <div class="profile-image-wrapper">
+              <img src="https://i.pravatar.cc/80?img=47" alt="Andrea Baker" />
+            </div>
+            <span class="account-name">Andrea Baker</span>
+          </div>
+          <div class="account-records">
+            <div class="records-header">
+              <p class="records-title">Posledné záznamy</p>
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/>
+                <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="records-list">
+              <li>
+                <div class="record-icon record-icon--green"></div>
+                <span class="record-text">Kukurica</span>
+                <span class="record-date">10.10.2025</span>
+                <svg class="checkmark-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" fill="#16a34a"/>
+                  <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </li>
+              <li>
+                <div class="record-icon record-icon--blue"></div>
+                <span class="record-text">Repka olejna</span>
+                <span class="record-date">15.06.2025</span>
+                <svg class="checkmark-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" fill="#16a34a"/>
+                  <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content-grid">
+      <article class="card card--video">
+        <h2 class="card-title">Videozábery</h2>
+        <div class="video-card">
+          <img src="https://images.unsplash.com/photo-1544966503-7d5f2966e4d2?auto=format&fit=crop&w=1200&q=80" alt="Agricultural field" />
+          <div class="video-card__overlay">
+            <h3>Budulov jačmeň</h3>
+            <p>10.10.2025 - 18:00 min</p>
+            <button class="video-card__favorite" type="button" aria-label="Favorite">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <article class="card card--details">
+        <h2 class="card-title">Viac detailne</h2>
+        <div class="details-grid">
+          <div class="detail-item detail-item--density">
+            <img src="https://images.unsplash.com/photo-1544966503-7d5f2966e4d2?auto=format&fit=crop&w=400&q=80" alt="Hustota porastu" />
+            <div class="detail-item__overlay">
+              <h4>Hustota porastu</h4>
+              <p>Cecejovce - 20:22 min</p>
+              <button class="detail-item__favorite" type="button" aria-label="Favorite">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="detail-item detail-item--fertilization">
+            <img src="https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?auto=format&fit=crop&w=400&q=80" alt="Hnojenie" />
+            <div class="detail-item__overlay">
+              <h4>Hnojenie</h4>
+              <p>Class duration - 18:57 min</p>
+              <button class="detail-item__favorite" type="button" aria-label="Favorite">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="detail-item detail-item--irrigation">
+            <img src="https://images.unsplash.com/photo-1544966503-7d5f2966e4d2?auto=format&fit=crop&w=400&q=80" alt="Zavlažovanie" />
+            <div class="detail-item__overlay">
+              <h4>Zavlažovanie</h4>
+              <p>Class duration - 20:00 min</p>
+              <button class="detail-item__favorite" type="button" aria-label="Favorite">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="detail-item detail-item--recommendations">
+            <img src="https://images.unsplash.com/photo-1548705085-101177834f56?auto=format&fit=crop&w=400&q=80" alt="Odporúčania" />
+            <div class="detail-item__overlay">
+              <h4>Odporúčania</h4>
+              <p>Class duration - 19:00 min</p>
+              <button class="detail-item__favorite" type="button" aria-label="Favorite">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="bottom-section">
+      <article class="card card--feedback">
+        <h2 class="card-title">Spätná väzba</h2>
+        <form class="feedback-form">
+          <label>
+            Nápad na vylepšenie aplikácie:
+            <input type="text" placeholder="Krátky popis" />
+          </label>
+          <label>
+            Položte nám otázku:
+            <input type="text" placeholder="Krátky popis" />
+          </label>
+          <button type="button" class="feedback-btn">Poslať</button>
+        </form>
+      </article>
+
+      <article class="card card--comparison">
+        <h2 class="card-title">Porovnanie výsledkov</h2>
+        <div class="comparison-chart">
+          <div class="chart-legend">
+            <div class="legend-item">
+              <span class="legend-dot legend-dot--today"></span>
+              <span>dnes</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot legend-dot--week"></span>
+              <span>pred týždňom</span>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-y-axis">
+              <span>20km</span>
+              <span>15km</span>
+              <span>10km</span>
+              <span>5km</span>
+              <span>0km</span>
+            </div>
+            <div class="chart-area">
+              <div class="chart-grid"></div>
+              <svg class="chart-lines" viewBox="0 0 400 200" preserveAspectRatio="none">
+                <polyline points="0,180 50,160 100,140 150,120 200,110 250,100 300,90 350,85 400,80" 
+                  fill="none" stroke="#2563eb" stroke-width="3"/>
+                <polyline points="0,190 50,170 100,150 150,130 200,120 250,115 300,110 350,105 400,100" 
+                  fill="none" stroke="#93c5fd" stroke-width="3"/>
+              </svg>
+              <div class="chart-x-axis">
+                <span>Sun</span>
+                <span>Mon</span>
+                <span>Tue</span>
+                <span>Wed</span>
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
