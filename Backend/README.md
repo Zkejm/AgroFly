@@ -1,63 +1,74 @@
-# AgroFly Backend - Orthomap Generation
+# AgroFly Backend
 
-Create orthomosaics from overlapping aerial/drone photos using OpenCV.
+Vytvárajte ortofotomapy z leteckých/dronových snímkov.
 
-## Setup
+Dva režimy:
+
+- **Lokálny (predvolený)** – OpenCV Stitcher, beží offline, žiadny server
+- **WebODM** – potrebuje spustené WebODM
+
+## Predpoklady
+
+1. **Python 3.10+**
+2. **Závislosti** – `pip install -r requirements.txt`
+
+Pre lokálny režim stačí Python a závislosti. WebODM je potrebné len pri použití `--webodm`.
+
+## Nastavenie
 
 ```bash
 cd Backend
 pip install -r requirements.txt
 ```
 
-## Usage
+Umiestnite fotografie do `data/`. Podporované formáty: JPG, JPEG, PNG. Potrebujete min. 2 obrázky.
 
-### From folder of photos
+## Použitie
 
-```bash
-python run_orthomap.py ./photos
-```
-
-### With custom output path
+### Lokálny režim (predvolený) – OpenCV, offline
 
 ```bash
-python run_orthomap.py ./photos ./output/orthomap.png
+python src/create_orthomap.py
 ```
 
-### Options
-
-- `-m scans` — Use affine-based stitching (better for overhead drone shots)
-- `-v` — Verbose output
+Načíta obrázky z `Backend/data/` a uloží ortofotomapu do `Backend/data/orthomap.png`. Žiadny server nie je potrebný.
 
 ```bash
-python run_orthomap.py ./photos -m scans -v
+python src/create_orthomap.py --local
+python src/create_orthomap.py ./moje_fotky ./vystup/orthomap.png
 ```
 
-### As Python module
+### WebODM režim – potrebuje spustené WebODM
 
 ```bash
-python -m orthomap ./photos
+python src/create_orthomap.py --webodm
 ```
 
-### From Python code
+## Možnosti
 
-```python
-from orthomap import load_images, OrthomapStitcher
 
-# Load images
-loaded = load_images("./photos")
-images = [img for _, img in loaded]
+| Možnosť              | Popis                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `--local`            | OpenCV Stitcher (offline). Predvolené.                                             |
+| `--webodm`           | WebODM API namiesto lokálneho OpenCV.                                              |
+| `-m`, `--mode`       | Režim pre OpenCV: `panorama` alebo `scans` (lepšie pre nadhlavové dronové zábery). |
+| `-q`, `--quiet`      | Minimálny výstup.                                                                  |
+| `--url`              | WebODM URL (len pri `--webodm`).                                                   |
+| `--user`             | WebODM používateľ (len pri `--webodm`).                                            |
+| `--password`         | WebODM heslo (len pri `--webodm`).                                                 |
+| `-r`, `--resolution` | Rozlíšenie ortofotomapy v cm/pixel (len pri `--webodm`).                           |
+| `--no-cleanup`       | Ponechať projekt v WebODM (len pri `--webodm`).                                    |
 
-# Stitch
-stitcher = OrthomapStitcher(mode="panorama")
-status, result = stitcher.stitch(images)
 
-if status == 0:
-    import cv2
-    cv2.imwrite("orthomap.png", result)
+Príklady:
+
+```bash
+python src/create_orthomap.py -m scans
 ```
 
-## Tips for best results
+## Riešenie problémov
 
-- Use overlapping photos (30–70% overlap recommended)
-- Keep similar lighting/exposure across images
-- For drone imagery, try `-m scans` mode
+- **"Need at least 2 images"** – Uistite sa, že `data/` obsahuje aspoň 2 súbory JPG/PNG.
+- **"Stitching failed"** – Skúste `-m scans` alebo overte prekrytie snímkov (30–70 % odporúčané).
+- **WebODM chyby** – Pri `--webodm` skontrolujte, či WebODM beží na danej URL.
+
