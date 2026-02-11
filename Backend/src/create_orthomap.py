@@ -6,7 +6,6 @@ import time
 from pathlib import Path
 
 import cv2
-import numpy as np
 import requests
 
 TASK_QUEUED = 10
@@ -15,84 +14,19 @@ TASK_FAILED = 30
 TASK_COMPLETED = 40
 TASK_CANCELED = 50
 
-# Stitcher works reliably only when both inputs are under ~6k; we always scale to this before each stitch
+# Working resolution for stitching; output detail matches this (6000 = high detail). We scale after each round to stay under OpenCV limit.
 STITCH_WORKING_SIZE = 6000
-
-# Min inliers for homography fallback
-MIN_INLIERS_HOMOGRAPHY = 10
-
-# Scale down large inputs so homography can find matches
-HOMOGRAPHY_WORKING_SIZE = 2500
-
-
-def _stitch_with_homography(result: "cv2.Mat", img: "cv2.Mat") -> "cv2.Mat | None":
-    """Fallback: stitch two images using ORB + findHomography + warp. Returns stitched image or None."""
-    res_h, res_w = result.shape[:2]
-    img_h, img_w = img.shape[:2]
-    scale_r = HOMOGRAPHY_WORKING_SIZE / max(res_h, res_w) if max(res_h, res_w) > HOMOGRAPHY_WORKING_SIZE else 1.0
-    scale_i = HOMOGRAPHY_WORKING_SIZE / max(img_h, img_w) if max(img_h, img_w) > HOMOGRAPHY_WORKING_SIZE else 1.0
-    if scale_r < 1.0:
-        result = cv2.resize(result, (int(res_w * scale_r), int(res_h * scale_r)), interpolation=cv2.INTER_AREA)
-        res_h, res_w = result.shape[:2]
-    if scale_i < 1.0:
-        img = cv2.resize(img, (int(img_w * scale_i), int(img_h * scale_i)), interpolation=cv2.INTER_AREA)
-        img_h, img_w = img.shape[:2]
-    orb = cv2.ORB_create(nfeatures=8000)
-    # For long panoramas, only use bottom and top bands for keypoints (where overlap with next image is)
-    crop_ratio = 0.5
-    for y_start, y_end in [(0, int(res_h * crop_ratio)), (int(res_h * (1 - crop_ratio)), res_h)]:
-        if y_end <= y_start + 50:
-            continue
-        band = result[y_start:y_end, :]
-        kp1, d1 = orb.detectAndCompute(band, None)
-        kp2, d2 = orb.detectAndCompute(img, None)
-        if d1 is None or d2 is None or len(kp1) < 8 or len(kp2) < 8:
-            continue
-        matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        matches = matcher.match(d1, d2)
-        if len(matches) < MIN_INLIERS_HOMOGRAPHY:
-            continue
-        pts1 = np.array([(kp1[m.queryIdx].pt[0], kp1[m.queryIdx].pt[1] + y_start) for m in matches], dtype=np.float32)
-        pts2 = np.array([kp2[m.trainIdx].pt for m in matches], dtype=np.float32)
-        H, mask = cv2.findHomography(pts2, pts1, cv2.RANSAC, 10.0)
-        if H is not None and mask is not None and mask.sum() >= MIN_INLIERS_HOMOGRAPHY:
-            break
-    else:
-        return None
-    if H is None or mask is None or mask.sum() < MIN_INLIERS_HOMOGRAPHY:
-        return None
-    h1, w1 = result.shape[:2]
-    h2, w2 = img.shape[:2]
-    corners = np.array([[0, 0], [w2, 0], [w2, h2], [0, h2]], dtype=np.float32).reshape(-1, 1, 2)
-    warped_corners = cv2.perspectiveTransform(corners, H)
-    x_min = min(0, warped_corners[:, 0, 0].min())
-    x_max = max(w1, warped_corners[:, 0, 0].max())
-    y_min = min(0, warped_corners[:, 0, 1].min())
-    y_max = max(h1, warped_corners[:, 0, 1].max())
-    tx, ty = int(round(-x_min)), int(round(-y_min))
-    out_w = int(round(x_max - x_min))
-    out_h = int(round(y_max - y_min))
-    if out_w <= 0 or out_h <= 0 or out_w > 32000 or out_h > 32000:
-        return None
-    H_translate = np.array([[1, 0, tx], [0, 1, ty], [0, 0, 1]], dtype=np.float64)
-    H_full = H_translate @ H
-    warped = cv2.warpPerspective(img, H_full, (out_w, out_h))
-    canvas = np.zeros((out_h, out_w, 3), dtype=result.dtype)
-    canvas[ty : ty + h1, tx : tx + w1] = result
-    mask_w = (warped.sum(axis=2) > 0)
-    for c in range(3):
-        canvas[:, :, c] = np.where(mask_w, warped[:, :, c], canvas[:, :, c])
-    return canvas
 
 
 def create_orthomap_local(
     input_folder: str | Path,
     output_path: str | Path | None = None,
-    mode: str = "panorama",
+    mode: str = "scans",
     max_size: int = 0,  # 0 = keep full resolution
     max_images: int | None = 15,  # None = no limit
     direction: str = "vertical",
     sequential: bool = True,
+    working_size: int = 0,  # 0 = use STITCH_WORKING_SIZE constant
     verbose: bool = True,
 ) -> Path | None:
     input_folder = Path(input_folder)
@@ -149,50 +83,90 @@ def create_orthomap_local(
     cv2.ocl.setUseOpenCL(False)
     stitcher_mode = cv2.Stitcher_SCANS if mode == "scans" else cv2.Stitcher_PANORAMA
     stitcher = cv2.Stitcher.create(stitcher_mode)
-    err_map = {-1: "ERR_NEED_MORE_IMGS", -3: "ERR_HOMOGRAPHY_EST_FAIL", -4: "ERR_CAMERA_PARAMS_ADJUST_FAIL"}
+    # OpenCV returns 0=OK, 1/-1=need more imgs (not enough overlap/features), 2/-3=homography fail, 3/-4=camera params
+    err_map = {
+        1: "not enough overlap/features (try more overlap, or --working-size)",
+        -1: "not enough overlap/features",
+        2: "homography failed",
+        -3: "homography failed",
+        3: "camera params failed",
+        -4: "camera params failed",
+    }
 
     if sequential:
-        result = images[0].copy()
-        skipped = 0
-        for i in range(1, len(images)):
+        wsize = working_size or STITCH_WORKING_SIZE
+        def scale_to_working(img):
+            h, w = img.shape[:2]
+            if max(h, w) <= wsize:
+                return img
+            s = wsize / max(h, w)
+            return cv2.resize(img, (int(w * s), int(h * s)), interpolation=cv2.INTER_AREA)
+
+        def try_stitch_two(a, b):
+            a_s, b_s = scale_to_working(a), scale_to_working(b)
+            status, out = -1, None
+            for x, y in [(a_s, b_s), (b_s, a_s)]:
+                try:
+                    s, o = stitcher.stitch([x, y])
+                    status, out = s, o
+                    if s == cv2.Stitcher_OK:
+                        return s, o
+                except cv2.error:
+                    pass
+            other = cv2.Stitcher.create(cv2.Stitcher_SCANS if stitcher_mode == cv2.Stitcher_PANORAMA else cv2.Stitcher_PANORAMA)
+            for x, y in [(a_s, b_s), (b_s, a_s)]:
+                try:
+                    s, o = other.stitch([x, y])
+                    status, out = s, o
+                    if s == cv2.Stitcher_OK:
+                        return s, o
+                except cv2.error:
+                    pass
+            return status, out
+
+        layer = [img.copy() for img in images]
+        round_num = 0
+        no_progress_rounds = 0
+        while len(layer) > 1:
+            round_num += 1
             if verbose:
-                print(f"  Stitching image {i + 1}/{len(images)}...")
-            res_h, res_w = result.shape[:2]
-            img = images[i]
-            img_h, img_w = img.shape[:2]
-            # Always scale both to STITCH_WORKING_SIZE so stitcher gets same-size inputs (fewer skips)
-            res_scale = STITCH_WORKING_SIZE / max(res_h, res_w) if max(res_h, res_w) > STITCH_WORKING_SIZE else 1.0
-            img_scale = STITCH_WORKING_SIZE / max(img_h, img_w) if max(img_h, img_w) > STITCH_WORKING_SIZE else 1.0
-            if res_scale < 1.0:
-                result = cv2.resize(result, (int(res_w * res_scale), int(res_h * res_scale)), interpolation=cv2.INTER_AREA)
-            if img_scale < 1.0:
-                img = cv2.resize(img, (int(img_w * img_scale), int(img_h * img_scale)), interpolation=cv2.INTER_AREA)
-            status, stitched = stitcher.stitch([result, img])
-            if status != cv2.Stitcher_OK:
-                status, stitched = stitcher.stitch([img, result])
-            if status != cv2.Stitcher_OK:
-                other_stitcher = cv2.Stitcher.create(cv2.Stitcher_SCANS if stitcher_mode == cv2.Stitcher_PANORAMA else cv2.Stitcher_PANORAMA)
-                status, stitched = other_stitcher.stitch([result, img])
-                if status != cv2.Stitcher_OK:
-                    status, stitched = other_stitcher.stitch([img, result])
-            if status == cv2.Stitcher_OK:
-                result = stitched
-            else:
-                stitched = _stitch_with_homography(result, img)
-                if stitched is None:
-                    stitched = _stitch_with_homography(img, result)
-                if stitched is not None:
-                    result = stitched
-                    if verbose:
-                        print(f"    (added with homography fallback)")
-                else:
-                    skipped += 1
-                    if verbose:
-                        msg = err_map.get(status, f"Error {status}")
-                        print(f"    Skipping image {i + 1} ({msg}), continuing...", file=sys.stderr)
+                print(f"  Round {round_num}: pairing {len(layer)} images...")
+            next_layer = []
+            for i in range(0, len(layer), 2):
+                if i + 1 >= len(layer):
+                    next_layer.append(scale_to_working(layer[i]))
                     continue
-        if verbose and skipped:
-            print(f"  Skipped {skipped} image(s).")
+                status, stitched = try_stitch_two(layer[i], layer[i + 1])
+                if status == cv2.Stitcher_OK:
+                    next_layer.append(scale_to_working(stitched))
+                else:
+                    if verbose:
+                        print(f"    Pair ({i + 1},{i + 2}) failed, keeping both.")
+                    next_layer.append(scale_to_working(layer[i]))
+                    next_layer.append(scale_to_working(layer[i + 1]))
+            if len(next_layer) >= len(layer):
+                no_progress_rounds += 1
+                if no_progress_rounds >= 3:
+                    if verbose:
+                        print(f"  3 rounds with no progress, stitching all {len(layer)} images together...")
+                    try:
+                        scaled = [scale_to_working(img) for img in layer]
+                        status, batch_result = stitcher.stitch(scaled)
+                        if status != cv2.Stitcher_OK:
+                            other = cv2.Stitcher.create(cv2.Stitcher_SCANS if stitcher_mode == cv2.Stitcher_PANORAMA else cv2.Stitcher_PANORAMA)
+                            status, batch_result = other.stitch(scaled)
+                        if status == cv2.Stitcher_OK:
+                            next_layer = [scale_to_working(batch_result)]
+                            if verbose:
+                                print("    Batch stitch succeeded.")
+                    except cv2.error:
+                        if verbose:
+                            print("    Batch stitch failed, continuing with current layer.")
+                    no_progress_rounds = 0
+            else:
+                no_progress_rounds = 0
+            layer = next_layer
+        result = layer[0]
     else:
         other_mode = "scans" if mode == "panorama" else "panorama"
         result = None
@@ -443,8 +417,8 @@ def main() -> int:
         "-m",
         "--mode",
         choices=["panorama", "scans"],
-        default="panorama",
-        help="Stitching mode for OpenCV: panorama or scans (better for overhead drone shots)",
+        default="scans",
+        help="Stitching mode: scans (default, fewer skips for drone/aerial) or panorama",
     )
     parser.add_argument(
         "--max-size",
@@ -472,6 +446,13 @@ def main() -> int:
         action="store_true",
         help="Stitch all images at once (default: stitch one by one, sequential).",
     )
+    parser.add_argument(
+        "--working-size",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Stitching resolution (longest side in px). 0 = use default (6000, high detail). Lower = fewer crashes, less detail.",
+    )
 
     args = parser.parse_args()
     use_local = args.local or not args.webodm
@@ -487,6 +468,7 @@ def main() -> int:
             max_images=max_imgs,
             direction=args.direction,
             sequential=not args.batch,
+            working_size=args.working_size or 0,
             verbose=not args.quiet,
         )
     else:
