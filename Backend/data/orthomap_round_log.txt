@@ -1,0 +1,364 @@
+Stitching round log (written after 3 consecutive rounds with no progress)
+Output path: /home/miroslavkolesar/Projects/AgroFly/Backend/data/orthomap.png
+Total input images: 15
+
+Round 1: 15 images -> 8 images (progress)
+  Pairs stitched OK: [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12), (13, 14)]
+  Pairs failed (kept both): none
+Round 2: 8 images -> 4 images (progress)
+  Pairs stitched OK: [(1, 2), (3, 4), (5, 6), (7, 8)]
+  Pairs failed (kept both): none
+Round 3: 4 images -> 3 images (progress)
+  Pairs stitched OK: [(1, 2)]
+  Pairs failed (kept both): [(3, 4)]
+Round 4: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 5: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 6: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 7: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 8: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 9: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 10: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 11: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 12: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 13: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 14: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 15: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 16: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 17: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 18: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 19: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 20: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 21: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 22: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 23: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 24: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 25: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 26: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 27: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 28: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 29: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 30: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 31: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 32: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 33: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 34: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 35: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 36: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 37: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 38: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 39: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 40: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 41: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 42: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 43: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 44: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 45: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 46: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 47: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 48: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 49: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 50: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 51: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 52: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 53: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 54: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 55: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 56: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 57: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 58: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 59: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 60: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 61: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 62: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 63: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 64: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 65: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 66: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 67: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 68: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 69: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 70: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 71: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 72: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 73: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 74: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 75: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 76: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 77: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 78: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 79: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 80: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 81: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 82: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 83: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 84: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 85: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 86: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 87: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 88: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 89: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 90: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 91: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 92: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 93: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 94: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 95: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 96: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 97: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 98: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 99: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 100: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 101: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 102: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 103: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 104: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 105: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 106: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 107: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 108: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 109: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 110: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 111: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 112: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 113: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 114: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 115: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 116: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 117: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 118: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 119: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]
+Round 120: 3 images -> 3 images (no progress)
+  Pairs stitched OK: none
+  Pairs failed (kept both): [(1, 2)]

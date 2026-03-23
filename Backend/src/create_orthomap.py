@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 
 import cv2
+import numpy as np
 import requests
 
 TASK_QUEUED = 10
@@ -14,19 +15,219 @@ TASK_FAILED = 30
 TASK_COMPLETED = 40
 TASK_CANCELED = 50
 
-# Working resolution for stitching; output detail matches this (6000 = high detail). We scale after each round to stay under OpenCV limit.
-STITCH_WORKING_SIZE = 6000
+STITCH_WORKING_SIZE = 6000  # kept for backward compat, no longer used internally
+
+# ── Resolution constants for the high-quality pipeline ───────────────────────
+# Features are detected at _FEATURE_DETECT_SIZE (fast, accurate geometry).
+# Warping/compositing is done at _COMPOSE_SIZE per image (high quality, fits RAM).
+# Both scales are corrected in camera intrinsics so geometry is always consistent.
+_FEATURE_DETECT_SIZE = 2000   # max long-side px for feature detection
+_COMPOSE_SIZE = 1500          # max long-side px per image during warp/blend
+
+
+def _stitch_hq(images: list, mode: str = "scans", verbose: bool = True):
+    """
+    High-quality stitching via the OpenCV detail pipeline:
+      SIFT features (@_FEATURE_DETECT_SIZE) → BestOf2Nearest matching →
+      HomographyBased estimator → BundleAdjusterRay →
+      plane/spherical warper (@_COMPOSE_SIZE per image) →
+      GAIN_BLOCKS exposure compensation → GraphCut seam finding →
+      Multi-band blending.
+
+    Returns the composited BGR image (uint8) or None on failure.
+    """
+    cv2.ocl.setUseOpenCL(False)
+
+    # ── Feature detection (at reduced scale for speed) ───────────────────────
+    try:
+        finder = cv2.SIFT_create(nfeatures=0, contrastThreshold=0.02, edgeThreshold=15)
+        det_name = "SIFT"
+    except AttributeError:
+        finder = cv2.ORB_create(nfeatures=8000)
+        det_name = "ORB"
+
+    if verbose:
+        print(f"  Detecting {det_name} features...")
+
+    h0, w0 = images[0].shape[:2]
+    feat_scale = min(1.0, _FEATURE_DETECT_SIZE / max(h0, w0))
+
+    features = []
+    for img in images:
+        h, w = img.shape[:2]
+        small = cv2.resize(img, (int(w * feat_scale), int(h * feat_scale)), interpolation=cv2.INTER_AREA) if feat_scale < 1.0 else img
+        feat = cv2.detail.computeImageFeatures2(finder, small)
+        features.append(feat)
+
+    if verbose:
+        print(f"  Found {sum(len(f.keypoints) for f in features)} keypoints across {len(features)} images")
+
+    # ── Matching ─────────────────────────────────────────────────────────────
+    if verbose:
+        print("  Matching features...")
+    matcher = cv2.detail.BestOf2NearestMatcher(False, 0.65)
+    pairwise_matches = matcher.apply2(features)
+    matcher.collectGarbage()
+
+    # ── Drop images with insufficient overlap ────────────────────────────────
+    orig_indices = cv2.detail.leaveBiggestComponent(features, pairwise_matches, 0.3)
+    if len(orig_indices) < 2:
+        if verbose:
+            print("  Not enough matching images for HQ pipeline.", file=sys.stderr)
+        return None
+
+    selected = [images[int(i)] for i in orig_indices]
+    if len(orig_indices) < len(images) and verbose:
+        print(f"  Using {len(orig_indices)}/{len(images)} images (others had insufficient overlap)")
+
+    # ── Camera estimation ────────────────────────────────────────────────────
+    estimator = cv2.detail_HomographyBasedEstimator()
+    ok, cameras = estimator.apply(features, pairwise_matches, None)
+    if not ok or not cameras:
+        if verbose:
+            print("  Camera estimation failed.", file=sys.stderr)
+        return None
+
+    for cam in cameras:
+        cam.R = cam.R.astype(np.float32)
+
+    # ── Bundle adjustment (global refinement) ────────────────────────────────
+    adjuster = cv2.detail_BundleAdjusterRay()
+    adjuster.setConfThresh(0.5)
+    adjuster.apply(features, pairwise_matches, cameras)
+
+    # ── Wave correction ──────────────────────────────────────────────────────
+    rmats = [np.copy(cam.R) for cam in cameras]
+    try:
+        cv2.detail.waveCorrect(rmats, cv2.detail.WAVE_CORRECT_HORIZ)
+        for cam, R in zip(cameras, rmats):
+            cam.R = R
+    except cv2.error:
+        pass
+
+    # ── Scale camera intrinsics to compose-scale pixels ──────────────────────
+    # Features were detected at feat_scale; we warp at compose_scale.
+    # Net multiplier brings intrinsics from feature-scale → compose-scale pixels.
+    compose_scale = min(1.0, _COMPOSE_SIZE / max(h0, w0))
+    net_scale = compose_scale / feat_scale
+    for cam in cameras:
+        cam.focal *= net_scale
+        cam.ppx *= net_scale
+        cam.ppy *= net_scale
+
+    focals = sorted(cam.focal for cam in cameras)
+    warped_image_scale = max(1.0, focals[len(focals) // 2])
+
+    # ── Warp at compose scale ─────────────────────────────────────────────────
+    # "plane" matches the flat-ground geometry of nadir drone shots;
+    # "spherical" is used for classic panoramas.
+    warper_type = "plane" if mode == "scans" else "spherical"
+    warper = cv2.PyRotationWarper(warper_type, warped_image_scale)
+
+    if verbose:
+        pct = int(compose_scale * 100)
+        print(f"  Warping images at {pct}% of input resolution ({_COMPOSE_SIZE}px cap)...")
+
+    corners, sizes, images_warped, masks_warped = [], [], [], []
+    for img, cam in zip(selected, cameras):
+        h, w = img.shape[:2]
+        if compose_scale < 1.0:
+            compose_img = cv2.resize(img, (int(w * compose_scale), int(h * compose_scale)), interpolation=cv2.INTER_AREA)
+        else:
+            compose_img = img
+        ch, cw = compose_img.shape[:2]
+        K = cam.K().astype(np.float32)
+        R = cam.R.astype(np.float32)
+        try:
+            corner, warped = warper.warp(compose_img, K, R, cv2.INTER_LINEAR, cv2.BORDER_REFLECT)
+        except cv2.error as exc:
+            if verbose:
+                print(f"  Warp error: {exc}", file=sys.stderr)
+            return None
+        corners.append(corner)
+        sizes.append((warped.shape[1], warped.shape[0]))
+        images_warped.append(warped)
+        mask = np.ones((ch, cw), dtype=np.uint8) * 255
+        _, mask_w = warper.warp(mask, K, R, cv2.INTER_NEAREST, cv2.BORDER_CONSTANT)
+        masks_warped.append(mask_w)
+
+    # ── Exposure compensation (per-image scalar gain) ────────────────────────
+    # ExposureCompensator_GAIN uses per-image statistics only — no full-canvas
+    # buffer — so it stays memory-safe regardless of how large the mosaic is.
+    if verbose:
+        print("  Exposure compensation...")
+    try:
+        compensator = cv2.detail.ExposureCompensator_createDefault(
+            cv2.detail.ExposureCompensator_GAIN
+        )
+        compensator.feed(corners, images_warped, masks_warped)
+        for i in range(len(images_warped)):
+            compensator.apply(i, corners[i], images_warped[i], masks_warped[i])
+    except cv2.error:
+        if verbose:
+            print("  Exposure compensation skipped (insufficient memory).")
+
+    # ── Seam finding (GraphCut minimises colour discontinuity) ───────────────
+    if verbose:
+        print("  Finding seams (GraphCut)...")
+    images_f = [img.astype(np.float32) for img in images_warped]
+    masks_seam = [m.copy() for m in masks_warped]
+    try:
+        seam_finder = cv2.detail_GraphCutSeamFinder("COST_COLOR")
+        seam_finder.find(images_f, corners, masks_seam)
+    except Exception:
+        masks_seam = masks_warped  # fall back to raw masks if seam finding fails
+
+    # ── Multi-band blending ──────────────────────────────────────────────────
+    if verbose:
+        print("  Multi-band blending...")
+    dst_roi = cv2.detail.resultRoi(corners, sizes)
+    blender = cv2.detail.Blender_createDefault(cv2.detail.Blender_MULTI_BAND)
+    blender.prepare(dst_roi)
+
+    for i in range(len(images_warped)):
+        blender.feed(images_warped[i].astype(np.int16), masks_seam[i], corners[i])
+
+    try:
+        result, _ = blender.blend(None, None)
+        return cv2.convertScaleAbs(result)
+    except cv2.error as exc:
+        if verbose:
+            print(f"  Blending error: {exc}", file=sys.stderr)
+        return None
+
+
+def _stitch_fallback(images: list, mode: str = "scans", verbose: bool = True):
+    """
+    Fallback to OpenCV's built-in Stitcher (less quality but more tolerant of
+    difficult image sets). Tries both scans and panorama modes.
+    """
+    cv2.ocl.setUseOpenCL(False)
+    modes = (
+        [cv2.Stitcher_SCANS, cv2.Stitcher_PANORAMA]
+        if mode == "scans"
+        else [cv2.Stitcher_PANORAMA, cv2.Stitcher_SCANS]
+    )
+    for sm in modes:
+        stitcher = cv2.Stitcher.create(sm)
+        try:
+            status, result = stitcher.stitch(images)
+            if status == cv2.Stitcher_OK:
+                return result
+        except cv2.error:
+            pass
+    return None
 
 
 def create_orthomap_local(
     input_folder: str | Path,
     output_path: str | Path | None = None,
     mode: str = "scans",
-    max_size: int = 0,  # 0 = keep full resolution
-    max_images: int | None = 15,  # None = no limit
+    max_size: int = 0,
+    max_images: int | None = 15,
     direction: str = "vertical",
-    sequential: bool = True,
-    working_size: int = 0,  # 0 = use STITCH_WORKING_SIZE constant
+    sequential: bool = True,   # kept for CLI backward compatibility
+    working_size: int = 0,     # kept for CLI backward compatibility
     verbose: bool = True,
 ) -> Path | None:
     input_folder = Path(input_folder)
@@ -54,138 +255,38 @@ def create_orthomap_local(
             h, w = img.shape[:2]
             if max_size > 0 and max(h, w) > max_size:
                 scale = max_size / max(h, w)
-                new_w, new_h = int(w * scale), int(h * scale)
-                img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+                img = cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
             images.append(img)
+
     if len(images) < 2:
         if verbose:
             print("Error: Could not load at least 2 images.", file=sys.stderr)
         return None
 
     if max_images and max_images >= 2 and len(images) > max_images:
-        if sequential:
-            images = images[:max_images]
-            if verbose:
-                print(f"Using first {len(images)} images (consecutive order for sequential stitching)")
-        else:
-            step = (len(images) - 1) / (max_images - 1)
-            indices = [int(round(i * step)) for i in range(max_images)]
-            images = [images[i] for i in indices]
-            if verbose:
-                print(f"Using {len(images)} images (sampled from original set)")
-
-    if verbose:
-        print("Stitching with OpenCV...")
+        images = images[:max_images]
+        if verbose:
+            print(f"Using first {len(images)} images")
 
     if direction == "vertical":
         images = [cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE) for img in images]
 
-    cv2.ocl.setUseOpenCL(False)
-    stitcher_mode = cv2.Stitcher_SCANS if mode == "scans" else cv2.Stitcher_PANORAMA
-    stitcher = cv2.Stitcher.create(stitcher_mode)
-    # OpenCV returns 0=OK, 1/-1=need more imgs (not enough overlap/features), 2/-3=homography fail, 3/-4=camera params
-    err_map = {
-        1: "not enough overlap/features (try more overlap, or --working-size)",
-        -1: "not enough overlap/features",
-        2: "homography failed",
-        -3: "homography failed",
-        3: "camera params failed",
-        -4: "camera params failed",
-    }
+    if verbose:
+        print(f"Stitching {len(images)} images...")
 
-    if sequential:
-        wsize = working_size or STITCH_WORKING_SIZE
-        def scale_to_working(img):
-            h, w = img.shape[:2]
-            if max(h, w) <= wsize:
-                return img
-            s = wsize / max(h, w)
-            return cv2.resize(img, (int(w * s), int(h * s)), interpolation=cv2.INTER_AREA)
+    result = _stitch_hq(images, mode=mode, verbose=verbose)
+    if result is None:
+        if verbose:
+            print("  High-quality pipeline did not succeed, trying fallback Stitcher...")
+        result = _stitch_fallback(images, mode=mode, verbose=verbose)
 
-        def try_stitch_two(a, b):
-            a_s, b_s = scale_to_working(a), scale_to_working(b)
-            status, out = -1, None
-            for x, y in [(a_s, b_s), (b_s, a_s)]:
-                try:
-                    s, o = stitcher.stitch([x, y])
-                    status, out = s, o
-                    if s == cv2.Stitcher_OK:
-                        return s, o
-                except cv2.error:
-                    pass
-            other = cv2.Stitcher.create(cv2.Stitcher_SCANS if stitcher_mode == cv2.Stitcher_PANORAMA else cv2.Stitcher_PANORAMA)
-            for x, y in [(a_s, b_s), (b_s, a_s)]:
-                try:
-                    s, o = other.stitch([x, y])
-                    status, out = s, o
-                    if s == cv2.Stitcher_OK:
-                        return s, o
-                except cv2.error:
-                    pass
-            return status, out
-
-        layer = [img.copy() for img in images]
-        round_num = 0
-        no_progress_rounds = 0
-        while len(layer) > 1:
-            round_num += 1
-            if verbose:
-                print(f"  Round {round_num}: pairing {len(layer)} images...")
-            next_layer = []
-            for i in range(0, len(layer), 2):
-                if i + 1 >= len(layer):
-                    next_layer.append(scale_to_working(layer[i]))
-                    continue
-                status, stitched = try_stitch_two(layer[i], layer[i + 1])
-                if status == cv2.Stitcher_OK:
-                    next_layer.append(scale_to_working(stitched))
-                else:
-                    if verbose:
-                        print(f"    Pair ({i + 1},{i + 2}) failed, keeping both.")
-                    next_layer.append(scale_to_working(layer[i]))
-                    next_layer.append(scale_to_working(layer[i + 1]))
-            if len(next_layer) >= len(layer):
-                no_progress_rounds += 1
-                if no_progress_rounds >= 3:
-                    if verbose:
-                        print(f"  3 rounds with no progress, stitching all {len(layer)} images together...")
-                    try:
-                        scaled = [scale_to_working(img) for img in layer]
-                        status, batch_result = stitcher.stitch(scaled)
-                        if status != cv2.Stitcher_OK:
-                            other = cv2.Stitcher.create(cv2.Stitcher_SCANS if stitcher_mode == cv2.Stitcher_PANORAMA else cv2.Stitcher_PANORAMA)
-                            status, batch_result = other.stitch(scaled)
-                        if status == cv2.Stitcher_OK:
-                            next_layer = [scale_to_working(batch_result)]
-                            if verbose:
-                                print("    Batch stitch succeeded.")
-                    except cv2.error:
-                        if verbose:
-                            print("    Batch stitch failed, continuing with current layer.")
-                    no_progress_rounds = 0
-            else:
-                no_progress_rounds = 0
-            layer = next_layer
-        result = layer[0]
-    else:
-        other_mode = "scans" if mode == "panorama" else "panorama"
-        result = None
-        for try_mode in [mode, other_mode]:
-            stitcher = cv2.Stitcher.create(cv2.Stitcher_SCANS if try_mode == "scans" else cv2.Stitcher_PANORAMA)
-            status, result = stitcher.stitch(images)
-            if status == cv2.Stitcher_OK:
-                if verbose and try_mode != mode:
-                    print(f"  (succeeded with {try_mode} mode)")
-                break
-            if verbose:
-                print(f"  {try_mode} failed ({err_map.get(status, status)}), trying next...")
-        if result is None:
-            if verbose:
-                print(f"Error: Stitching failed - {err_map.get(status, status)}", file=sys.stderr)
-            return None
+    if result is None:
+        if verbose:
+            print("Error: Stitching failed with all methods.", file=sys.stderr)
+        return None
 
     if direction == "vertical":
-        result = cv2.rotate(result, cv2.ROTATE_90_COUNTERCLOCKWISE)  # undo input rotation
+        result = cv2.rotate(result, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(output_path), result)
